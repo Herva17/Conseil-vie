@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système Vocal en JavaScript</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        nav {
+            margin: 15px 0;
+        }
+
+        nav a {
+            margin: 0 15px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 80vh;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #textToSpeak {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .like-comment-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .comments {
+            margin-top: 20px;
+            max-width: 600px;
+            width: 100%;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            overflow-y: auto;
+            max-height: 200px;
+        }
+
+        .comment-input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .submit-comment {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .submit-comment:hover {
+            background-color: #45a049;
+        }
+
+        .like-count {
+            margin: 10px 0;
+        }
+
+        .voice-select {
+            margin: 10px 0;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="#">Accueil</a>
+            <a href="#">À propos</a>
+            <a href="#">Contact</a>
+        </nav>
+        <h1>Système Vocal en JavaScript</h1>
+    </header>
+    
+    <div class="container">
+        <p id="textToSpeak">Voici un conseil qui peut vraiment changer votre vie :
+
+            Pratiquez la gratitude quotidienne
+            Qu'est-ce que c'est ? La gratitude consiste à reconnaître et apprécier les bonnes choses dans votre vie, grandes ou petites.
+            
+            Comment le faire ?
+            
+            Tenez un journal de gratitude : Chaque jour, écrivez trois à cinq choses pour lesquelles vous êtes reconnaissant. Cela peut être un bon repas, un sourire d'un ami, ou même un moment de calme.
+            Réfléchissez à vos expériences : Prenez un moment chaque jour pour penser aux choses qui vous rendent heureux ou qui vous ont fait progresser.
+            Exprimez votre gratitude : Dites merci aux personnes qui vous entourent, que ce soit en personne, par message, ou même en écrivant une lettre.
+            Pourquoi cela change-t-il la vie ? Pratiquer la gratitude peut :
+            
+            Améliorer votre humeur et votre bien-être général.
+            Renforcer vos relations en créant des connexions positives.
+            Vous aider à voir le bon côté des situations difficiles, ce qui vous rend plus résilient.
+            En intégrant la gratitude dans votre quotidien, vous cultivez une perspective positive qui peut transformer votre vie de manière significative. Essayez-le pendant quelques semaines et voyez comment cela impacte votre état d'esprit et vos interactions avec les autres.</p>
+        <select id="voiceSelect" class="voice-select"></select>
+        <button id="speakButton">Parler</button>
+        
+        <div class="like-comment-section">
+            <button id="likeButton">J'aime</button>
+            <div class="like-count" id="likeCount">0 J'aime</div>
+            <div>
+                <textarea id="commentInput" class="comment-input" placeholder="Écrivez un commentaire..."></textarea>
+                <button id="submitComment" class="submit-comment">Soumettre</button>
+            </div>
+            <div class="comments" id="commentsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let likeCount = 0;
+        const likeButton = document.getElementById('likeButton');
+        const likeCountDisplay = document.getElementById('likeCount');
+        const commentInput = document.getElementById('commentInput');
+        const commentsContainer = document.getElementById('commentsContainer');
+        const voiceSelect = document.getElementById('voiceSelect');
+
+        // Gérer le compteur de "J'aime"
+        likeButton.addEventListener('click', function() {
+            likeCount++;
+            likeCountDisplay.innerText = `${likeCount} J'aime`;
+        });
+
+        // Gérer l'ajout de commentaires
+        document.getElementById('submitComment').addEventListener('click', function() {
+            const commentText = commentInput.value.trim();
+            if (commentText) {
+                const newComment = document.createElement('div');
+                newComment.innerText = commentText;
+                commentsContainer.appendChild(newComment);
+                commentInput.value = '';
+            }
+        });
+
+        // Gérer la synthèse vocale
+        let voices = [];
+        function populateVoiceList() {
+            voices = speechSynthesis.getVoices();
+            voices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        // Appeler la fonction pour peupler la liste de voix
+        speechSynthesis.onvoiceschanged = populateVoiceList;
+
+        // Fonction pour parler le texte
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                const selectedVoiceIndex = voiceSelect.value;
+                utterance.voice = voices[selectedVoiceIndex];
+                utterance.lang = 'fr-FR';
+                speechSynthesis.speak(utterance);
+            } else {
+                alert('Désolé, votre navigateur ne prend pas en charge l\'API de synthèse vocale.');
+            }
+        }
+
+        // Écouteur d'événements pour le bouton "Parler"
+        document.getElementById('speakButton').addEventListener('click', function() {
+            const text = document.getElementById('textToSpeak').innerText;
+            speakText(text);
+        });
+    </script>
+</body>
+</html>
